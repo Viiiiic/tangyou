@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>糖友</title>
-    <link rel="stylesheet" href="./styles.css?v=20260430-prod-wire" />
+    <link rel="stylesheet" href="./styles.css?v=20260430-auth" />
   </head>
   <body>
     <main class="app-shell" aria-live="polite">
@@ -14,7 +14,24 @@
             <img class="brand-logo" src="./assets/tangyou-logo-option2.png?v=20260430-option2" alt="" />
             <h1>糖友</h1>
           </div>
+          <button class="logout-button hidden" id="logoutBtn" type="button">退出</button>
         </header>
+
+        <section class="screen" id="authScreen" data-screen="auth">
+          <div class="auth-card">
+            <h2>先登录</h2>
+            <p>内部试用，登录后才能识别饭菜。</p>
+            <label for="authName">称呼</label>
+            <input id="authName" type="text" autocomplete="username" placeholder="例如：妈妈" />
+            <label for="authPassword">密码</label>
+            <input id="authPassword" type="password" autocomplete="current-password" placeholder="至少 6 位" />
+            <label for="inviteCode">邀请码</label>
+            <input id="inviteCode" type="text" autocomplete="one-time-code" placeholder="注册时填写" />
+            <button class="primary-action compact" id="loginBtn" type="button">登录</button>
+            <button class="text-action auth-secondary" id="registerBtn" type="button">邀请码注册</button>
+            <p class="auth-message" id="authMessage"></p>
+          </div>
+        </section>
 
         <section class="screen active" id="cameraScreen" data-screen="camera">
           <div class="screen-heading">
@@ -68,6 +85,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20260430-prod-wire"></script>
+    <script src="./app.js?v=20260430-auth"></script>
   </body>
 </html>

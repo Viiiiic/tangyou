@@ -1,6 +1,7 @@
 const fs = require("fs/promises");
 const http = require("http");
 const path = require("path");
+const { AuthService } = require("./backend/auth-service");
 const { HttpError, ScanService } = require("./backend/scan-service");
 const { TtsProvider } = require("./backend/tts-provider");
 const { getVisionStatus } = require("./backend/vision-adapter");
@@ -10,6 +11,7 @@ const ROOT = __dirname;
 const STORAGE_DIR = path.join(ROOT, "storage");
 const TTS_DIR = path.join(STORAGE_DIR, "tts");
 
+const authService = new AuthService({ storageDir: STORAGE_DIR });
 const ttsProvider = new TtsProvider({ storageDir: TTS_DIR });
 const scanService = new ScanService({
   storageDir: STORAGE_DIR,
@@ -32,15 +34,45 @@ async function route(req, res) {
   }
 
   if (req.method === "GET" && url.pathname === "/api/health") {
+    const user = await authService.userFromRequest(req);
     return sendJson(res, 200, {
       ok: true,
       service: "tangyou-backend",
       vision: getVisionStatus(),
       tts: ttsProvider.getStatus(),
+      auth: authService.getStatus(user),
     });
   }
 
+  if (req.method === "GET" && url.pathname === "/api/auth/status") {
+    const user = await authService.userFromRequest(req);
+    return sendJson(res, 200, authService.getStatus(user));
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/register") {
+    const body = await readJsonBody(req);
+    return sendJson(res, 201, await authService.register({
+      name: body.name,
+      password: body.password,
+      inviteCode: body.invite_code,
+    }));
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/login") {
+    const body = await readJsonBody(req);
+    return sendJson(res, 200, await authService.login({
+      name: body.name,
+      password: body.password,
+    }));
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/logout") {
+    await authService.logout(req);
+    return sendJson(res, 200, { ok: true });
+  }
+
   if (req.method === "POST" && url.pathname === "/api/meal-scans") {
+    await authService.requireUser(req);
     const body = await readJsonBody(req);
     const job = await scanService.createScan({
       image: body.image,
@@ -52,6 +84,7 @@ async function route(req, res) {
 
   const scanMatch = url.pathname.match(/^\/api\/meal-scans\/([^/]+)$/);
   if (req.method === "GET" && scanMatch) {
+    await authService.requireUser(req);
     return sendJson(res, 200, scanService.getScan(scanMatch[1]));
   }
 
@@ -126,7 +159,7 @@ function sendOptions(res) {
   res.writeHead(204, {
     ...corsHeaders(),
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
   });
   res.end();
@@ -174,6 +207,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  authService,
   server,
   scanService,
 };

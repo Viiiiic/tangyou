@@ -5,7 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check app.js && node --check server.js && node --check backend/scan-service.js && node --check backend/vision-adapter.js && node --check backend/risk-rules.js && node --check backend/tts-provider.js",
+    "check": "node --check app.js && node --check server.js && node --check backend/auth-service.js && node --check backend/scan-service.js && node --check backend/vision-adapter.js && node --check backend/risk-rules.js && node --check backend/tts-provider.js",
     "test": "node --test tests/*.test.js"
   },
   "devDependencies": {

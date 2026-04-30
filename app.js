@@ -10,6 +10,9 @@ if (window.location.protocol === "file:") {
 }
 
 const API_BASE = resolveApiBase();
+const AUTH_TOKEN_KEY = "tangyou_auth_token";
+let authToken = window.localStorage.getItem(AUTH_TOKEN_KEY) || "";
+let authRequired = false;
 
 const serviceUnavailableResult = {
   state: "gray",
@@ -66,6 +69,12 @@ async function startAnalysis(file) {
     showScreen("result");
   } catch (error) {
     console.warn("Backend scan failed:", error);
+    if (isAuthError(error)) {
+      clearAuth();
+      showAuthMessage("请先登录。");
+      showScreen("auth");
+      return;
+    }
     window.setTimeout(() => {
       finishAnalyzingState();
       currentResult = resultForError(error);
@@ -113,7 +122,7 @@ async function analyzeWithBackend(file) {
   }
 
   const image = await fileToCompressedDataUrl(file);
-  const response = await fetch(apiUrl("/api/meal-scans"), {
+  const response = await apiFetch("/api/meal-scans", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -123,6 +132,7 @@ async function analyzeWithBackend(file) {
   });
 
   if (!response.ok) {
+    if (response.status === 401) throw new Error("auth_required");
     throw new Error(`create scan failed: ${response.status}`);
   }
 
@@ -134,8 +144,9 @@ async function pollScan(scanId) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < SCAN_TIMEOUT_MS) {
     await delay(450);
-    const response = await fetch(apiUrl(`/api/meal-scans/${encodeURIComponent(scanId)}`));
+    const response = await apiFetch(`/api/meal-scans/${encodeURIComponent(scanId)}`);
     if (!response.ok) {
+      if (response.status === 401) throw new Error("auth_required");
       throw new Error(`poll scan failed: ${response.status}`);
     }
 
@@ -172,11 +183,134 @@ function resultForError(error) {
       "外网识图后端还没配置。",
     );
   }
+  if (message.includes("auth_required")) {
+    return makeFailureResult("先登录", "登录后才能识别饭菜。", "请先登录。");
+  }
   return makeFailureResult(
     "识别没连上",
     "本地识别服务没连上，刷新后再试。",
     "识别服务没连上，刷新后再试。",
   );
+}
+
+async function initializeAuth() {
+  try {
+    const response = await apiFetch("/api/auth/status");
+    if (!response.ok) {
+      showScreen("camera");
+      return;
+    }
+    const status = await response.json();
+    authRequired = Boolean(status.required);
+    updateAuthUi(status.user);
+    if (authRequired && !status.authenticated) {
+      showScreen("auth");
+      return;
+    }
+    showScreen("camera");
+  } catch (error) {
+    console.warn("Auth status failed:", error);
+    showScreen("camera");
+  }
+}
+
+async function login() {
+  await submitAuth("/api/auth/login", false);
+}
+
+async function register() {
+  await submitAuth("/api/auth/register", true);
+}
+
+async function submitAuth(path, includeInviteCode) {
+  showAuthMessage("");
+  const name = document.getElementById("authName").value.trim();
+  const password = document.getElementById("authPassword").value;
+  const inviteCode = document.getElementById("inviteCode").value.trim();
+  if (!name || !password || (includeInviteCode && !inviteCode)) {
+    showAuthMessage(includeInviteCode ? "称呼、密码和邀请码都要填。" : "称呼和密码都要填。");
+    return;
+  }
+
+  try {
+    const response = await fetch(apiUrl(path), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        password,
+        invite_code: inviteCode,
+      }),
+    });
+    if (!response.ok) {
+      showAuthMessage(await authErrorMessage(response));
+      return;
+    }
+    const session = await response.json();
+    authToken = session.token;
+    window.localStorage.setItem(AUTH_TOKEN_KEY, authToken);
+    updateAuthUi(session.user);
+    showScreen("camera");
+  } catch (error) {
+    console.warn("Auth submit failed:", error);
+    showAuthMessage("登录服务没连上。");
+  }
+}
+
+async function logout() {
+  try {
+    await apiFetch("/api/auth/logout", { method: "POST" });
+  } catch (error) {
+    console.warn("Logout failed:", error);
+  }
+  clearAuth();
+  if (authRequired) {
+    showScreen("auth");
+  }
+}
+
+function clearAuth() {
+  authToken = "";
+  window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  updateAuthUi(null);
+}
+
+function updateAuthUi(user) {
+  document.getElementById("logoutBtn").classList.toggle("hidden", !authRequired || !user);
+}
+
+function showAuthMessage(message) {
+  document.getElementById("authMessage").textContent = message;
+}
+
+async function authErrorMessage(response) {
+  try {
+    const payload = await response.json();
+    const message = String(payload.error || "");
+    if (message.includes("invite code")) return "邀请码不对。";
+    if (message.includes("already exists")) return "这个称呼已经注册。";
+    if (message.includes("password")) return "密码至少 6 位。";
+    if (message.includes("name")) return "称呼需要 2 到 24 个字。";
+    if (response.status === 401) return "称呼或密码不对。";
+  } catch {
+    // Fall through to the generic message.
+  }
+  return "登录失败，稍后再试。";
+}
+
+function apiFetch(path, options = {}) {
+  const headers = new Headers(options.headers || {});
+  if (authToken) {
+    headers.set("Authorization", `Bearer ${authToken}`);
+  }
+  return fetch(apiUrl(path), {
+    ...options,
+    headers,
+  });
+}
+
+function isAuthError(error) {
+  return String(error?.message || error || "").includes("auth_required");
 }
 
 function makeFailureResult(verdict, advice, voice) {
@@ -408,6 +542,9 @@ function apiUrl(path) {
 
 document.getElementById("takePhotoBtn").addEventListener("click", openCameraInput);
 document.getElementById("cameraFrameBtn").addEventListener("click", openCameraInput);
+document.getElementById("loginBtn").addEventListener("click", login);
+document.getElementById("registerBtn").addEventListener("click", register);
+document.getElementById("logoutBtn").addEventListener("click", logout);
 document.getElementById("cameraInput").addEventListener("change", (event) => {
   const [file] = event.target.files;
   if (file) {
@@ -429,3 +566,4 @@ document.querySelectorAll("[data-go]").forEach((button) => {
 
 window.addEventListener("resize", fitFoodGroupLists);
 renderResult(currentResult);
+initializeAuth();

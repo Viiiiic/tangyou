@@ -101,3 +101,22 @@ test("routes balanced plate to green", () => {
     "这顿饭没有不能吃的。杂粮饭少吃点。青菜可以多吃点。豆腐可以吃。",
   );
 });
+
+test("routes a single small starch snack to yellow instead of unclear", () => {
+  const result = buildResult({
+    scanId: "scan_test",
+    modelVersion: "test-vision",
+    vision: {
+      quality: "clear",
+      confidence: 0.95,
+      recognized: [
+        { name: "青团", category: "refined_starch", portion_band: "small", confidence: 0.95 },
+      ],
+    },
+  });
+
+  assert.equal(result.state, "yellow");
+  assert.equal(result.headline, "少量吃");
+  assert.deepEqual(result.food_groups.limit, ["青团"]);
+  assert.equal(result.safety.abstain_reason, null);
+});

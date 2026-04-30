@@ -44,6 +44,9 @@ TTS_MODE=minimax
 MINIMAX_VOICE_ID="Chinese (Mandarin)_Kind-hearted_Antie"
 MINIMAX_TTS_SPEED="1.15"
 ALLOWED_ORIGINS="https://你的用户名.github.io"
+AUTH_REQUIRED=1
+AUTH_INVITE_CODE="给家人或内部用户的邀请码"
+AUTH_TOKEN_TTL_DAYS=30
 ```
 
 如果只打开 GitHub Pages H5 而没有配置后端，页面会保守提示“识别没连上”，不会假装识别成功。
@@ -57,6 +60,7 @@ ALLOWED_ORIGINS="https://你的用户名.github.io"
 - 普通上传在没有真实视觉模型时会保守返回 `识别未接入`，不会伪造黄绿红判断
 - 显式 demo 模式支持四种测试场景：yellow、gray、green、red
 - 配置 MiniMax CLI 和 `MINIMAX_API_KEY` 后，后端会调用 MiniMax 视觉能力解析饭菜，再由本地规则判断四态结果
+- 可选简单鉴权：设置 `AUTH_REQUIRED=1` 和 `AUTH_INVITE_CODE` 后，用户需要邀请码注册并登录，才能调用识图接口
 - 后端确定性规则输出四态结果：按平时量、米饭少半碗、先别吃、照片没拍清
 - 配置 `MINIMAX_API_KEY` 后默认使用 MiniMax TTS；没有 key 时才退回浏览器朗读
 - 四态大字结果：按平时量、米饭少半碗、先别吃、照片没拍清
@@ -101,6 +105,19 @@ export MINIMAX_CLI_BIN="/path/to/mmx"
 ```
 
 没有 MiniMax key 或没有安装 `mmx` 时，普通上传会显示“识别未接入”，不会伪造识别结果。
+
+## 简单登录配置
+
+外网部署后建议打开鉴权，避免陌生人调用你的 MiniMax 后端：
+
+```bash
+export AUTH_REQUIRED=1
+export AUTH_INVITE_CODE="只发给家人的邀请码"
+export AUTH_TOKEN_TTL_DAYS=30
+npm start
+```
+
+用户第一次用邀请码注册，之后用称呼和密码登录。账号和会话保存在 `storage/users.json`、`storage/sessions.json`。
 
 可选备用 provider：
 

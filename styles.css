@@ -111,6 +111,32 @@ h3 {
   font-size: 24px;
 }
 
+label {
+  display: block;
+  margin: 14px 0 6px;
+  color: #315b46;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+input {
+  width: 100%;
+  min-height: 58px;
+  border: 2px solid rgba(28, 42, 36, 0.18);
+  border-radius: 14px;
+  background: #fffdf7;
+  color: var(--ink);
+  font: inherit;
+  font-size: 24px;
+  font-weight: 800;
+  padding: 12px 14px;
+}
+
+input:focus {
+  border-color: var(--green);
+  outline: 3px solid rgba(47, 125, 79, 0.18);
+}
+
 .screen {
   display: none;
   padding: 18px 24px 28px;
@@ -191,6 +217,52 @@ h3 {
   font-size: 21px;
   font-weight: 800;
   margin-top: 20px;
+}
+
+.logout-button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  font-weight: 900;
+  min-height: 44px;
+  padding: 0 4px;
+}
+
+.auth-card {
+  margin-top: 24px;
+  padding: 22px 20px 24px;
+  border: 3px solid rgba(47, 125, 79, 0.28);
+  border-radius: 22px;
+  background: #edf7ef;
+}
+
+.auth-card h2 {
+  margin-bottom: 8px;
+  color: #23663f;
+}
+
+.auth-card p {
+  margin-bottom: 14px;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1.35;
+  font-weight: 800;
+}
+
+.auth-card .primary-action {
+  margin-top: 18px;
+}
+
+.auth-secondary {
+  margin-top: 10px;
+}
+
+.auth-message {
+  min-height: 28px;
+  margin: 8px 0 0 !important;
+  color: #8d2d27 !important;
+  font-size: 18px !important;
 }
 
 #resultScreen .text-action {

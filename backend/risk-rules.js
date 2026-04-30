@@ -123,12 +123,44 @@ function buildResult({ scanId, vision, modelVersion }) {
     });
   }
 
+  if (refinedStarch) {
+    return makeResult({
+      scanId,
+      state: "yellow",
+      headline: "少量吃",
+      advice: "糯米或主食升糖快，尝一点就好。",
+      voiceText: "少量吃，别当主食加量。",
+      primaryLabel: "听怎么做",
+      primaryAction: "listen",
+      recognized: items,
+      confidence,
+      modelVersion,
+      abstainReason: null,
+    });
+  }
+
+  if (hasProtein || hasVeg) {
+    return makeResult({
+      scanId,
+      state: "green",
+      headline: "菜肉可以吃",
+      advice: "菜肉可以吃，主食另算。",
+      voiceText: "菜肉可以吃，主食另算。",
+      primaryLabel: "听结果",
+      primaryAction: "listen",
+      recognized: items,
+      confidence,
+      modelVersion,
+      abstainReason: null,
+    });
+  }
+
   return makeResult({
     scanId,
     state: "gray",
-    headline: "照片没拍清",
-    advice: "重新拍一张，把整盘饭菜拍进去。",
-    voiceText: "照片没拍清，重拍一张。",
+    headline: "不能判断",
+    advice: "我看到食物了，但分类不够确定。",
+    voiceText: "看到了食物，但还不能判断。",
     primaryLabel: "重新拍一张",
     primaryAction: "camera",
     recognized: items,
