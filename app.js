@@ -226,29 +226,12 @@ function fileToCompressedDataUrl(file) {
 function renderResult(result) {
   const card = document.getElementById("resultCard");
   card.className = `result-card ${result.state}`;
-  renderRecognizedFoods(result.recognized || []);
   renderFoodGroups(result.foodGroups, result.state);
   document.getElementById("resultVerdict").textContent = result.verdict;
-  document.getElementById("adviceText").textContent = result.advice;
   document.getElementById("listenBtn").textContent = result.primaryLabel;
   document
     .getElementById("resultBackBtn")
     .classList.toggle("hidden", result.primaryAction === "camera");
-}
-
-function renderRecognizedFoods(items) {
-  const foodSeen = document.getElementById("foodSeen");
-  const foodList = document.getElementById("foodList");
-  const names = Array.from(new Set(items.map((item) => cleanFoodName(item.name)).filter(Boolean)));
-
-  if (names.length === 0) {
-    foodSeen.classList.add("unclear");
-    foodList.textContent = "还没看清食物";
-    return;
-  }
-
-  foodSeen.classList.remove("unclear");
-  foodList.textContent = names.slice(0, 5).join("、");
 }
 
 function renderFoodGroups(groups, state) {
