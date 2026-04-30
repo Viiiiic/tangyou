@@ -266,9 +266,9 @@ function fitFoodGroupLists() {
 }
 
 function fitOneLineText(element) {
-  element.style.setProperty("--food-list-size", "27px");
-  let size = 27;
-  while (element.scrollWidth > element.clientWidth && size > 13) {
+  element.style.setProperty("--food-list-size", "24px");
+  let size = 24;
+  while (element.scrollWidth > element.clientWidth && size > 18) {
     size -= 1;
     element.style.setProperty("--food-list-size", `${size}px`);
   }
