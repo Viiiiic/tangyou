@@ -25,7 +25,7 @@ npm start
 ```bash
 gh auth login
 gh repo create tangyou --public --source=. --remote=origin --push
-gh api -X POST repos/:owner/:repo/pages -f build_type=workflow
+gh api -X POST repos/{owner}/{repo}/pages -f build_type=workflow
 ```
 
 推送后，`.github/workflows/pages.yml` 会把 `index.html`、`app.js`、`styles.css` 和 `assets/` 发布为 H5 页面。
