@@ -71,7 +71,7 @@ test("routes large rice to yellow", () => {
   assert.deepEqual(result.food_groups.avoid, []);
   assert.equal(
     result.voice_text,
-    "看到米饭、青菜、鸡肉。青菜、鸡肉可以吃。米饭少量吃。没有不能吃的。主食少吃，先吃菜肉。",
+    "这顿饭没有不能吃的。米饭少吃点，先吃菜肉。青菜可以多吃点。鸡肉可以吃。",
   );
 });
 
@@ -96,4 +96,8 @@ test("routes balanced plate to green", () => {
   assert.deepEqual(result.food_groups.can_eat, ["青菜", "豆腐"]);
   assert.deepEqual(result.food_groups.limit, ["杂粮饭"]);
   assert.deepEqual(result.food_groups.avoid, []);
+  assert.equal(
+    result.voice_text,
+    "这顿饭没有不能吃的。杂粮饭少吃点。青菜可以多吃点。豆腐可以吃。",
+  );
 });

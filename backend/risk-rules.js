@@ -159,7 +159,7 @@ function makeResult({
     advice,
     food_summary: summarizeFoods(recognized),
     food_groups: foodGroups,
-    voice_text: withFoodSummary(voiceText, recognized, foodGroups),
+    voice_text: buildVoiceText(voiceText, recognized, foodGroups),
     primary_label: primaryLabel,
     primary_action: primaryAction,
     recognized,
@@ -177,13 +177,38 @@ function summarizeFoods(items) {
   return names.length > 0 ? `我看到：${names.join("、")}` : "还没看清食物";
 }
 
-function withFoodSummary(voiceText, items, foodGroups) {
-  const names = cleanFoodNames(items).slice(0, 3);
-  if (names.length === 0) {
+function buildVoiceText(voiceText, items, foodGroups) {
+  if (!hasFoodGroupItems(foodGroups)) {
     return voiceText;
   }
-  const foodDecision = summarizeFoodDecisionForVoice(foodGroups || classifyFoods(items));
-  return `看到${names.join("、")}。${foodDecision ? `${foodDecision}。` : ""}${voiceText}`;
+
+  const avoid = foodGroups.avoid || [];
+  const limit = foodGroups.limit || [];
+  const canEat = foodGroups.can_eat || [];
+  const vegetables = namesInGroupByCategory(items, ["non_starchy_veg"], canEat);
+  const proteins = namesInGroupByCategory(items, ["protein"], canEat);
+  const usedCanNames = new Set([...vegetables, ...proteins]);
+  const otherCan = canEat.filter((name) => !usedCanNames.has(name));
+  const parts = [];
+
+  parts.push(avoid.length > 0 ? `${joinNames(avoid, 5)}不能吃` : "这顿饭没有不能吃的");
+
+  if (limit.length > 0) {
+    const limitAdvice = `${joinNames(limit, 5)}少吃点`;
+    parts.push(voiceText.includes("先吃菜肉") ? `${limitAdvice}，先吃菜肉` : limitAdvice);
+  }
+
+  if (vegetables.length > 0) {
+    parts.push(`${joinNames(vegetables, 5)}可以多吃点`);
+  }
+  if (proteins.length > 0) {
+    parts.push(`${joinNames(proteins, 5)}可以吃`);
+  }
+  if (vegetables.length === 0 && proteins.length === 0 && otherCan.length > 0) {
+    parts.push(`${joinNames(otherCan, 5)}可以吃`);
+  }
+
+  return `${parts.join("。")}。`;
 }
 
 function emptyFoodGroups() {
@@ -220,20 +245,24 @@ function classifyFoods(items) {
   return groups;
 }
 
-function summarizeFoodDecisionForVoice(groups) {
-  const parts = [];
-  if (groups.can_eat.length > 0) {
-    parts.push(`${joinNames(groups.can_eat, 3)}可以吃`);
-  }
-  if (groups.limit.length > 0) {
-    parts.push(`${joinNames(groups.limit, 3)}少量吃`);
-  }
-  if (groups.avoid.length > 0) {
-    parts.push(`${joinNames(groups.avoid, 3)}不能吃`);
-  } else if (groups.can_eat.length > 0 || groups.limit.length > 0) {
-    parts.push("没有不能吃的");
-  }
-  return parts.join("。");
+function hasFoodGroupItems(groups) {
+  return Boolean(
+    groups &&
+      [groups.can_eat, groups.limit, groups.avoid, groups.unknown].some(
+        (names) => Array.isArray(names) && names.length > 0,
+      ),
+  );
+}
+
+function namesInGroupByCategory(items, categories, groupNames) {
+  const categorySet = new Set(categories);
+  const groupSet = new Set(groupNames);
+  return cleanFoodNames(
+    (items || []).filter((item) => {
+      const name = cleanFoodName(item.name);
+      return categorySet.has(item.category) && groupSet.has(name);
+    }),
+  );
 }
 
 function cleanFoodNames(items) {
