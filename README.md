@@ -20,6 +20,16 @@ npm start
 
 这个项目可以发布成 GitHub Pages H5 页面。GitHub Pages 只能托管静态前端，不能保存 MiniMax key，也不能运行 `server.js`。
 
+首次发布：
+
+```bash
+gh auth login
+gh repo create tangyou --public --source=. --remote=origin --push
+gh api -X POST repos/:owner/:repo/pages -f build_type=workflow
+```
+
+推送后，`.github/workflows/pages.yml` 会把 `index.html`、`app.js`、`styles.css` 和 `assets/` 发布为 H5 页面。
+
 真实识别需要把 Node 后端单独部署到一个 HTTPS 地址，然后用下面的方式让 H5 连接后端：
 
 `https://你的用户名.github.io/你的仓库名/?api=https://你的后端域名`
