@@ -335,10 +335,10 @@ h3 {
 
 .food-group {
   display: grid;
-  grid-template-columns: 92px 1fr;
+  grid-template-columns: 66px minmax(0, 1fr);
   align-items: start;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: 6px;
+  padding: 10px 8px;
   border-left: 8px solid var(--line);
   background: rgba(255, 253, 247, 0.72);
 }
@@ -376,11 +376,14 @@ h3 {
 
 .food-group-list {
   color: var(--ink);
-  font-size: 27px;
+  font-size: var(--food-list-size, 27px);
   line-height: 1.25;
   font-weight: 900;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
   word-break: keep-all;
-  overflow-wrap: break-word;
+  overflow-wrap: normal;
 }
 
 .result-card.green .result-verdict {

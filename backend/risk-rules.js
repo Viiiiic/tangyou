@@ -75,9 +75,9 @@ function buildResult({ scanId, vision, modelVersion }) {
     return makeResult({
       scanId,
       state: "red",
-      headline: "先别吃",
+      headline: sweetDrink ? "甜饮别喝" : "甜点别吃",
       advice: sweetDrink ? "去掉甜饮，主食减量。" : "甜点先别吃，主食减量。",
-      voiceText: sweetDrink ? "先别吃，去掉甜饮。" : "先别吃，甜点先别吃。",
+      voiceText: sweetDrink ? "甜饮别喝，主食少一点。" : "甜点别吃，主食少一点。",
       primaryLabel: "改好再拍",
       primaryAction: "camera",
       recognized: items,
@@ -92,13 +92,12 @@ function buildResult({ scanId, vision, modelVersion }) {
     refinedStarch?.category === "congee_noodle" ||
     (refinedStarch?.portion_band === "normal" && (!hasProtein || !hasVeg))
   ) {
-    const headline = refinedStarch?.name?.includes("面") ? "面少一点" : "米饭少半碗";
     return makeResult({
       scanId,
       state: "yellow",
-      headline,
+      headline: "主食少吃",
       advice: "先吃菜肉，再吃主食。",
-      voiceText: `${headline}，先吃菜肉。`,
+      voiceText: "主食少吃，先吃菜肉。",
       primaryLabel: "听怎么做",
       primaryAction: "listen",
       recognized: items,
@@ -112,9 +111,9 @@ function buildResult({ scanId, vision, modelVersion }) {
     return makeResult({
       scanId,
       state: "green",
-      headline: "按平时量",
-      advice: "不要再加甜饮或点心。",
-      voiceText: "按平时量，别加甜饮。",
+      headline: "菜肉先吃",
+      advice: "先吃菜肉，主食别加量。",
+      voiceText: "菜肉先吃，主食按平时量。",
       primaryLabel: "听结果",
       primaryAction: "listen",
       recognized: items,

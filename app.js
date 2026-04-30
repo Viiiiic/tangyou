@@ -240,11 +240,13 @@ function renderFoodGroups(groups, state) {
     document.getElementById("canEatList").textContent = "不能判断";
     document.getElementById("limitEatList").textContent = "不能判断";
     document.getElementById("avoidEatList").textContent = "不能判断";
+    fitFoodGroupLists();
     return;
   }
   document.getElementById("canEatList").textContent = listOrNone(normalized.canEat);
   document.getElementById("limitEatList").textContent = listOrNone(normalized.limit);
   document.getElementById("avoidEatList").textContent = listOrNone(normalized.avoid);
+  fitFoodGroupLists();
 }
 
 function hasFoodGroupItems(groups) {
@@ -255,6 +257,21 @@ function hasFoodGroupItems(groups) {
 
 function listOrNone(names) {
   return names && names.length > 0 ? names.slice(0, 5).join("、") : "没有";
+}
+
+function fitFoodGroupLists() {
+  window.requestAnimationFrame(() => {
+    document.querySelectorAll(".food-group-list").forEach(fitOneLineText);
+  });
+}
+
+function fitOneLineText(element) {
+  element.style.setProperty("--food-list-size", "27px");
+  let size = 27;
+  while (element.scrollWidth > element.clientWidth && size > 13) {
+    size -= 1;
+    element.style.setProperty("--food-list-size", `${size}px`);
+  }
 }
 
 function normalizeFoodGroups(groups, recognized) {
@@ -407,4 +424,5 @@ document.querySelectorAll("[data-go]").forEach((button) => {
   button.addEventListener("click", () => showScreen(button.dataset.go));
 });
 
+window.addEventListener("resize", fitFoodGroupLists);
 renderResult(currentResult);
