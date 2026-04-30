@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>糖友</title>
+    <link rel="stylesheet" href="./styles.css?v=20260430-tts-fast" />
+  </head>
+  <body>
+    <main class="app-shell" aria-live="polite">
+      <section class="phone" aria-label="糖友小程序原型">
+        <header class="topbar">
+          <div class="brand-lockup">
+            <img class="brand-logo" src="./assets/tangyou-mark.png" alt="" />
+            <h1>糖友</h1>
+          </div>
+        </header>
+
+        <section class="screen active" id="cameraScreen" data-screen="camera">
+          <div class="screen-heading">
+            <h2>对准饭菜</h2>
+          </div>
+
+          <button class="camera-frame" id="cameraFrameBtn" type="button" aria-label="饭前拍一下拍饭菜">
+            <img src="./assets/camera-guide.png" alt="" />
+            <span class="camera-brand-chip" aria-hidden="true">
+              <img src="./assets/tangyou-mark.png" alt="" />
+            </span>
+          </button>
+
+          <button class="primary-action" id="takePhotoBtn" type="button">饭前拍一下</button>
+          <input id="cameraInput" class="camera-input" type="file" accept="image/*" capture="environment" aria-label="拍饭菜照片" />
+        </section>
+
+        <section class="screen" id="analyzingScreen" data-screen="analyzing">
+          <div class="analysis-card">
+            <div class="pulse-ring" aria-hidden="true"></div>
+            <h2>正在看这顿饭</h2>
+            <p id="analysisHint">如果看不清，我会直接告诉你。</p>
+            <div class="progress-bar"><span id="progressFill"></span></div>
+          </div>
+        </section>
+
+        <section class="screen" id="resultScreen" data-screen="result">
+          <article class="result-card" id="resultCard">
+            <div class="food-seen" id="foodSeen">
+              <div class="food-seen-label">我看到</div>
+              <div class="food-list" id="foodList">还没看清食物</div>
+            </div>
+            <div class="result-verdict" id="resultVerdict">米饭少半碗</div>
+            <p class="result-advice" id="adviceText">先吃菜和肉蛋豆腐。</p>
+          </article>
+
+          <div class="result-actions">
+            <button class="primary-action compact" id="listenBtn" type="button">听怎么做</button>
+          </div>
+
+          <button class="text-action" id="resultBackBtn" data-go="camera" type="button">再拍一张</button>
+        </section>
+
+        <div class="toast" id="toast" role="status"></div>
+      </section>
+    </main>
+
+    <script src="./app.js?v=20260430-tts-fast"></script>
+  </body>
+</html>
