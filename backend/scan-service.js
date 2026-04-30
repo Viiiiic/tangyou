@@ -3,6 +3,8 @@ const path = require("path");
 const { analyzeMealImage } = require("./vision-adapter");
 const { buildResult } = require("./risk-rules");
 
+const DEFAULT_TTS_RESULT_TIMEOUT_MS = 8000;
+
 class ScanService {
   constructor({ storageDir, ttsProvider }) {
     this.storageDir = storageDir;
@@ -64,7 +66,7 @@ class ScanService {
       vision,
       modelVersion: vision.model_version,
     });
-    const tts = await this.ttsProvider.generate({ text: result.voice_text });
+    const tts = await this.generateTtsForResult(result.voice_text);
     const completed = {
       scan_id: scanId,
       status: "completed",
@@ -84,6 +86,30 @@ class ScanService {
 
     this.jobs.set(scanId, completed);
     await this.appendProvenance(completed);
+  }
+
+  async generateTtsForResult(text) {
+    const timeoutMs = Number(process.env.TTS_RESULT_TIMEOUT_MS || DEFAULT_TTS_RESULT_TIMEOUT_MS);
+    const ttsPromise = this.ttsProvider.generate({ text }).catch((error) => ({
+      provider: "browser-fallback",
+      audio_url: null,
+      cached: false,
+      voice_id: "browser",
+      model: "speechSynthesis",
+      reason: error.message,
+    }));
+
+    return Promise.race([
+      ttsPromise,
+      delay(timeoutMs).then(() => ({
+        provider: "browser-fallback",
+        audio_url: null,
+        cached: false,
+        voice_id: "browser",
+        model: "speechSynthesis",
+        reason: `tts_result_timeout_${timeoutMs}ms`,
+      })),
+    ]);
   }
 
   async appendProvenance(job) {

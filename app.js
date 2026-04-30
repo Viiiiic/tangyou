@@ -27,6 +27,7 @@ const serviceUnavailableResult = {
   },
 };
 
+const SCAN_TIMEOUT_MS = 90000;
 let currentResult = serviceUnavailableResult;
 let progressTimer = null;
 let currentAudio = null;
@@ -67,10 +68,10 @@ async function startAnalysis(file) {
     console.warn("Backend scan failed:", error);
     window.setTimeout(() => {
       finishAnalyzingState();
-      currentResult = serviceUnavailableResult;
+      currentResult = resultForError(error);
       renderResult(currentResult);
       showScreen("result");
-      showToast("识别没连上，不能判断");
+      showToast(currentResult.voice);
     }, 700);
   }
 }
@@ -130,7 +131,7 @@ async function analyzeWithBackend(file) {
 
 async function pollScan(scanId) {
   const startedAt = Date.now();
-  while (Date.now() - startedAt < 70000) {
+  while (Date.now() - startedAt < SCAN_TIMEOUT_MS) {
     await delay(450);
     const response = await fetch(apiUrl(`/api/meal-scans/${encodeURIComponent(scanId)}`));
     if (!response.ok) {
@@ -146,7 +147,37 @@ async function pollScan(scanId) {
     }
   }
 
-  throw new Error("scan timed out");
+  throw new Error("scan_timeout");
+}
+
+function resultForError(error) {
+  const message = String(error?.message || error || "");
+  if (message === "图片读取失败") {
+    return makeFailureResult("图片读不了", "换一张照片，或重新拍一张。", "图片读不了，换一张。");
+  }
+  if (message.includes("scan_timeout")) {
+    return makeFailureResult("识别太慢了", "这次等太久，重新拍一张再试。", "识别太慢了，重新拍一张。");
+  }
+  if (message.includes("create scan failed: 413")) {
+    return makeFailureResult("图片太大", "离近一点重拍，不要上传原图。", "图片太大，重新拍。");
+  }
+  if (message.includes("create scan failed") || message.includes("poll scan failed")) {
+    return makeFailureResult("后端出错", "本地服务返回异常，刷新后再试。", "后端出错，刷新后再试。");
+  }
+  return makeFailureResult(
+    "识别没连上",
+    "本地识别服务没连上，刷新后再试。",
+    "识别服务没连上，刷新后再试。",
+  );
+}
+
+function makeFailureResult(verdict, advice, voice) {
+  return {
+    ...serviceUnavailableResult,
+    verdict,
+    advice,
+    voice,
+  };
 }
 
 function normalizeBackendResult(result) {
@@ -353,7 +384,15 @@ function resolveApiBase() {
     window.localStorage.setItem("tangyou_api_base", normalized);
     return normalized;
   }
+  if (isLocalHost()) {
+    window.localStorage.removeItem("tangyou_api_base");
+    return "";
+  }
   return normalizeApiBase(window.TANGYOU_API_BASE || window.localStorage.getItem("tangyou_api_base") || "");
+}
+
+function isLocalHost() {
+  return ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 }
 
 function normalizeApiBase(value) {
