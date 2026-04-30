@@ -58,13 +58,13 @@ ALLOWED_ORIGINS="https://你的用户名.github.io"
 - 显式 demo 模式支持四种测试场景：yellow、gray、green、red
 - 配置 MiniMax CLI 和 `MINIMAX_API_KEY` 后，后端会调用 MiniMax 视觉能力解析饭菜，再由本地规则判断四态结果
 - 后端确定性规则输出四态结果：按平时量、米饭少半碗、先别吃、照片没拍清
-- 默认使用浏览器快速朗读，不等待 MiniMax 生成 mp3；需要更好听声音时可切到 MiniMax TTS
+- 配置 `MINIMAX_API_KEY` 后默认使用 MiniMax TTS；没有 key 时才退回浏览器朗读
 - 四态大字结果：按平时量、米饭少半碗、先别吃、照片没拍清
 - 本地 PNG 取景图，离线打开也能看到首屏引导
 
 ## TTS 配置
 
-默认快模式：
+没有 MiniMax key 时的浏览器兜底模式：
 
 ```bash
 export TTS_MODE=browser
@@ -83,7 +83,7 @@ export MINIMAX_TTS_SPEED="1.15"
 npm start
 ```
 
-MiniMax 模式会使用项目内 `mmx-cli` 的 `speech synthesize` 生成音频；如果 CLI 不可用，再退回 HTTP TTS。生成的音频会缓存在 `storage/tts/`。
+MiniMax 模式会使用项目内 `mmx-cli` 的 `speech synthesize` 生成音频；如果 CLI 不可用，再退回 HTTP TTS。生成的音频会缓存在 `storage/tts/`。如果设置了 `MINIMAX_API_KEY` 且没有显式设置 `TTS_MODE=browser`，默认会走 MiniMax。
 
 ## 真实饭菜识别配置（MiniMax）
 
@@ -113,8 +113,8 @@ npm start
 
 ## 验收方式
 
-- 普通流程：打开 `http://localhost:4173`，选择任意图片。当前没有真实视觉模型，会返回“识别未接入”。
-- UI 演示态：打开 `http://localhost:4173?scenario=red`、`?scenario=gray`、`?scenario=green`、`?scenario=yellow`。
+- 普通流程：打开 `http://localhost:4173`，选择任意图片。配置 MiniMax 后会走真实识图；未配置时会保守返回“识别未接入”。
+- UI 演示态只在后端设置 `ALLOW_DEMO_SCENARIOS=1` 后可用；普通 H5 上传不再传 demo 场景参数。
 - 健康检查：`curl http://localhost:4173/api/health`
 - 规则测试：`npm test`
 

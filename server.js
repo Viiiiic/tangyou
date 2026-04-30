@@ -10,9 +10,10 @@ const ROOT = __dirname;
 const STORAGE_DIR = path.join(ROOT, "storage");
 const TTS_DIR = path.join(STORAGE_DIR, "tts");
 
+const ttsProvider = new TtsProvider({ storageDir: TTS_DIR });
 const scanService = new ScanService({
   storageDir: STORAGE_DIR,
-  ttsProvider: new TtsProvider({ storageDir: TTS_DIR }),
+  ttsProvider,
 });
 
 const server = http.createServer(async (req, res) => {
@@ -35,7 +36,7 @@ async function route(req, res) {
       ok: true,
       service: "tangyou-backend",
       vision: getVisionStatus(),
-      minimax_tts: Boolean(process.env.MINIMAX_API_KEY),
+      tts: ttsProvider.getStatus(),
     });
   }
 
@@ -168,7 +169,7 @@ function contentType(filePath) {
 if (require.main === module) {
   server.listen(PORT, () => {
     console.log(`糖友后端已启动: http://localhost:${PORT}`);
-    console.log("MiniMax TTS:", process.env.MINIMAX_API_KEY ? "enabled" : "not configured, using browser fallback");
+    console.log("MiniMax TTS:", ttsProvider.getStatus().configured ? "enabled" : "not configured, using browser fallback");
   });
 }
 

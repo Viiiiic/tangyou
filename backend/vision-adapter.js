@@ -29,7 +29,7 @@ async function analyzeMealImage({ imageDataUrl, scenario }) {
   const imageHash = hashImage(imageDataUrl);
   const selectedScenario = normalizeScenario(scenario);
 
-  if (selectedScenario) {
+  if (selectedScenario && demoScenariosEnabled()) {
     return {
       image_hash: imageHash,
       model_version: DEMO_MODEL_VERSION,
@@ -89,7 +89,8 @@ function getVisionStatus() {
     minimax_cli_bin: provider === "minimax" ? miniMaxCliBin() : null,
     minimax_cli_available: provider === "minimax" ? isMiniMaxCliAvailable() : null,
     supported_providers: ["minimax", "openai"],
-    demo_scenarios: SCENARIOS,
+    demo_scenarios_enabled: demoScenariosEnabled(),
+    demo_scenarios: demoScenariosEnabled() ? SCENARIOS : [],
     required_env: requiredEnvForProvider(provider),
   };
 }
@@ -445,6 +446,10 @@ function providerErrorVision(imageHash, provider, error) {
 function normalizeScenario(scenario) {
   if (!scenario) return null;
   return SCENARIOS.includes(scenario) ? scenario : null;
+}
+
+function demoScenariosEnabled() {
+  return process.env.ALLOW_DEMO_SCENARIOS === "1";
 }
 
 function hashImage(imageDataUrl) {

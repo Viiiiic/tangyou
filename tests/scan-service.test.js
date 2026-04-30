@@ -7,7 +7,9 @@ const { ScanService } = require("../backend/scan-service");
 
 test("slow tts does not block completed recognition result", async () => {
   const originalTimeout = process.env.TTS_RESULT_TIMEOUT_MS;
+  const originalDemoScenarios = process.env.ALLOW_DEMO_SCENARIOS;
   process.env.TTS_RESULT_TIMEOUT_MS = "10";
+  process.env.ALLOW_DEMO_SCENARIOS = "1";
   const storageDir = await fs.mkdtemp(path.join(os.tmpdir(), "tangyou-scan-test-"));
   const service = new ScanService({
     storageDir,
@@ -34,6 +36,11 @@ test("slow tts does not block completed recognition result", async () => {
       delete process.env.TTS_RESULT_TIMEOUT_MS;
     } else {
       process.env.TTS_RESULT_TIMEOUT_MS = originalTimeout;
+    }
+    if (originalDemoScenarios === undefined) {
+      delete process.env.ALLOW_DEMO_SCENARIOS;
+    } else {
+      process.env.ALLOW_DEMO_SCENARIOS = originalDemoScenarios;
     }
   }
 });

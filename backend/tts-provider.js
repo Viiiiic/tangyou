@@ -18,8 +18,8 @@ class TtsProvider {
     this.apiKey = process.env.MINIMAX_API_KEY || "";
     this.endpoint = process.env.MINIMAX_TTS_ENDPOINT || DEFAULT_ENDPOINT;
     this.model = process.env.MINIMAX_TTS_MODEL || DEFAULT_MODEL;
-    this.voiceId = process.env.MINIMAX_VOICE_ID || DEFAULT_VOICE_ID;
-    this.mode = process.env.TTS_MODE || DEFAULT_MODE;
+    this.voiceId = normalizeVoiceId(process.env.MINIMAX_VOICE_ID || DEFAULT_VOICE_ID);
+    this.mode = process.env.TTS_MODE || (this.apiKey ? "minimax" : DEFAULT_MODE);
     this.cliBin = miniMaxCliBin();
   }
 
@@ -86,6 +86,19 @@ class TtsProvider {
         reason: error.message,
       };
     }
+  }
+
+  getStatus() {
+    return {
+      configured: Boolean(this.apiKey) && this.mode === "minimax",
+      mode: this.mode,
+      provider: this.mode === "minimax" ? "minimax" : "browser",
+      voice_id: this.mode === "minimax" ? this.voiceId : "browser",
+      model: this.mode === "minimax" ? this.model : "speechSynthesis",
+      minimax_cli_bin: this.mode === "minimax" ? this.cliBin : null,
+      minimax_cli_available: this.mode === "minimax" ? isMiniMaxCliAvailable(this.cliBin) : null,
+      required_env: this.mode === "minimax" && !this.apiKey ? ["MINIMAX_API_KEY"] : [],
+    };
   }
 
   cacheKey(text) {
@@ -197,6 +210,14 @@ function miniMaxCliBin() {
   }
   const localCli = path.join(__dirname, "..", "node_modules", ".bin", "mmx");
   return fsSync.existsSync(localCli) ? localCli : "mmx";
+}
+
+function normalizeVoiceId(voiceId) {
+  const normalized = String(voiceId || "").trim();
+  if (!normalized || normalized === "Chinese" || normalized === "Chinese (Mandarin)") {
+    return DEFAULT_VOICE_ID;
+  }
+  return normalized;
 }
 
 function isMiniMaxCliAvailable(cliBin) {

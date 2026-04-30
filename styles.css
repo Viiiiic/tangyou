@@ -77,17 +77,13 @@ button:focus-visible {
 }
 
 .brand-logo {
-  display: grid;
   width: 56px;
   height: 56px;
-  place-items: center;
   border-radius: 16px;
-  background: #23663f;
-  color: #fffdf7;
+  object-fit: cover;
+  display: block;
+  background: #fffdf7;
   box-shadow: 0 8px 18px rgba(28, 42, 36, 0.12);
-  font-size: 30px;
-  font-weight: 900;
-  line-height: 1;
 }
 
 h1,

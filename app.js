@@ -108,16 +108,17 @@ async function analyzeWithBackend(file) {
   if (window.location.protocol === "file:") {
     throw new Error("Backend API requires http://localhost");
   }
+  if (!API_BASE && !isLocalHost()) {
+    throw new Error("backend_not_configured");
+  }
 
   const image = await fileToCompressedDataUrl(file);
-  const scenario = new URLSearchParams(window.location.search).get("scenario");
   const response = await fetch(apiUrl("/api/meal-scans"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       image,
       filename: file.name,
-      scenario,
     }),
   });
 
@@ -163,6 +164,13 @@ function resultForError(error) {
   }
   if (message.includes("create scan failed") || message.includes("poll scan failed")) {
     return makeFailureResult("后端出错", "本地服务返回异常，刷新后再试。", "后端出错，刷新后再试。");
+  }
+  if (message.includes("backend_not_configured")) {
+    return makeFailureResult(
+      "识图未接入",
+      "外网 H5 还没配置识图后端。",
+      "外网识图后端还没配置。",
+    );
   }
   return makeFailureResult(
     "识别没连上",
