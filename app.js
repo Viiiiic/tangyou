@@ -19,6 +19,12 @@ const serviceUnavailableResult = {
   primaryLabel: "重新拍一张",
   primaryAction: "camera",
   recognized: [],
+  foodGroups: {
+    canEat: [],
+    limit: [],
+    avoid: [],
+    unknown: [],
+  },
 };
 
 let currentResult = serviceUnavailableResult;
@@ -144,6 +150,7 @@ async function pollScan(scanId) {
 }
 
 function normalizeBackendResult(result) {
+  const recognized = Array.isArray(result.recognized) ? result.recognized : [];
   return {
     state: result.state,
     verdict: result.headline,
@@ -154,7 +161,11 @@ function normalizeBackendResult(result) {
     ttsAudioUrl: result.tts_audio_url,
     scanId: result.scan_id,
     safety: result.safety,
-    recognized: Array.isArray(result.recognized) ? result.recognized : [],
+    recognized,
+    foodGroups:
+      result.state === "gray"
+        ? { canEat: [], limit: [], avoid: [], unknown: [] }
+        : normalizeFoodGroups(result.food_groups, recognized),
   };
 }
 
@@ -185,6 +196,7 @@ function renderResult(result) {
   const card = document.getElementById("resultCard");
   card.className = `result-card ${result.state}`;
   renderRecognizedFoods(result.recognized || []);
+  renderFoodGroups(result.foodGroups, result.state);
   document.getElementById("resultVerdict").textContent = result.verdict;
   document.getElementById("adviceText").textContent = result.advice;
   document.getElementById("listenBtn").textContent = result.primaryLabel;
@@ -208,12 +220,87 @@ function renderRecognizedFoods(items) {
   foodList.textContent = names.slice(0, 5).join("、");
 }
 
+function renderFoodGroups(groups, state) {
+  const normalized = groups || { canEat: [], limit: [], avoid: [], unknown: [] };
+  if (state === "gray" && !hasFoodGroupItems(normalized)) {
+    document.getElementById("canEatList").textContent = "不能判断";
+    document.getElementById("limitEatList").textContent = "不能判断";
+    document.getElementById("avoidEatList").textContent = "不能判断";
+    return;
+  }
+  document.getElementById("canEatList").textContent = listOrNone(normalized.canEat);
+  document.getElementById("limitEatList").textContent = listOrNone(normalized.limit);
+  document.getElementById("avoidEatList").textContent = listOrNone(normalized.avoid);
+}
+
+function hasFoodGroupItems(groups) {
+  return [groups.canEat, groups.limit, groups.avoid, groups.unknown].some(
+    (names) => Array.isArray(names) && names.length > 0,
+  );
+}
+
+function listOrNone(names) {
+  return names && names.length > 0 ? names.slice(0, 5).join("、") : "没有";
+}
+
+function normalizeFoodGroups(groups, recognized) {
+  if (groups && typeof groups === "object") {
+    return {
+      canEat: normalizeNameList(groups.can_eat),
+      limit: normalizeNameList(groups.limit),
+      avoid: normalizeNameList(groups.avoid),
+      unknown: normalizeNameList(groups.unknown),
+    };
+  }
+  return classifyRecognizedFoods(recognized || []);
+}
+
+function normalizeNameList(names) {
+  return Array.isArray(names) ? Array.from(new Set(names.map(cleanFoodName).filter(Boolean))) : [];
+}
+
+function classifyRecognizedFoods(items) {
+  const groups = {
+    canEat: [],
+    limit: [],
+    avoid: [],
+    unknown: [],
+  };
+
+  for (const item of items || []) {
+    const name = cleanFoodName(item.name);
+    if (!name) continue;
+
+    if (["sweet_drink", "dessert"].includes(item.category)) {
+      pushUnique(groups.avoid, name);
+    } else if (
+      ["refined_starch", "starchy_veg", "congee_noodle", "fried_high_fat"].includes(
+        item.category,
+      )
+    ) {
+      pushUnique(groups.limit, name);
+    } else if (["non_starchy_veg", "protein"].includes(item.category)) {
+      pushUnique(groups.canEat, name);
+    } else {
+      pushUnique(groups.unknown, name);
+    }
+  }
+
+  return groups;
+}
+
 function cleanFoodName(name) {
   return String(name || "")
     .replace(/\s*[（(].*$/g, "")
     .replace(/\s+/g, "")
     .replace(/[，,。.;；:：]+$/g, "")
     .slice(0, 10);
+}
+
+function pushUnique(list, value) {
+  if (!list.includes(value)) {
+    list.push(value);
+  }
 }
 
 async function speakCurrentResult() {

@@ -350,6 +350,63 @@ h3 {
   color: var(--gray);
 }
 
+.food-judgement {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.food-group {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-left: 8px solid var(--line);
+  background: rgba(255, 253, 247, 0.72);
+}
+
+.food-group.can {
+  border-left-color: var(--green);
+}
+
+.food-group.limit {
+  border-left-color: var(--yellow);
+}
+
+.food-group.avoid {
+  border-left-color: var(--red);
+}
+
+.food-group-label {
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.food-group.can .food-group-label {
+  color: #23663f;
+}
+
+.food-group.limit .food-group-label {
+  color: #8a4f0d;
+}
+
+.food-group.avoid .food-group-label {
+  color: #8d2d27;
+}
+
+.food-group-list {
+  color: var(--ink);
+  font-size: 27px;
+  line-height: 1.25;
+  font-weight: 900;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 .result-card.green .result-verdict {
   color: #23663f;
 }

@@ -17,6 +17,12 @@ test("routes unclear photo to gray", () => {
   assert.equal(result.state, "gray");
   assert.equal(result.primary_action, "camera");
   assert.equal(result.safety.abstain_reason, "blur");
+  assert.deepEqual(result.food_groups, {
+    can_eat: [],
+    limit: [],
+    avoid: [],
+    unknown: [],
+  });
 });
 
 test("routes sweet drink to red", () => {
@@ -35,6 +41,10 @@ test("routes sweet drink to red", () => {
 
   assert.equal(result.state, "red");
   assert.equal(result.primary_action, "camera");
+  assert.deepEqual(result.food_groups.can_eat, []);
+  assert.deepEqual(result.food_groups.limit, ["米饭"]);
+  assert.deepEqual(result.food_groups.avoid, ["甜饮"]);
+  assert.match(result.voice_text, /甜饮不能吃/);
 });
 
 test("routes large rice to yellow", () => {
@@ -55,7 +65,13 @@ test("routes large rice to yellow", () => {
   assert.equal(result.state, "yellow");
   assert.equal(result.headline, "米饭少半碗");
   assert.equal(result.food_summary, "我看到：米饭、青菜、鸡肉");
-  assert.equal(result.voice_text, "看到米饭、青菜、鸡肉。米饭少半碗，先吃菜肉。");
+  assert.deepEqual(result.food_groups.can_eat, ["青菜", "鸡肉"]);
+  assert.deepEqual(result.food_groups.limit, ["米饭"]);
+  assert.deepEqual(result.food_groups.avoid, []);
+  assert.equal(
+    result.voice_text,
+    "看到米饭、青菜、鸡肉。青菜、鸡肉可以吃。米饭少量吃。没有不能吃的。米饭少半碗，先吃菜肉。",
+  );
 });
 
 test("routes balanced plate to green", () => {
@@ -75,4 +91,7 @@ test("routes balanced plate to green", () => {
 
   assert.equal(result.state, "green");
   assert.equal(result.primary_action, "listen");
+  assert.deepEqual(result.food_groups.can_eat, ["青菜", "豆腐"]);
+  assert.deepEqual(result.food_groups.limit, ["杂粮饭"]);
+  assert.deepEqual(result.food_groups.avoid, []);
 });

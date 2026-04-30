@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>糖友</title>
-    <link rel="stylesheet" href="./styles.css?v=20260430-tts-fast" />
+    <link rel="stylesheet" href="./styles.css?v=20260430-food-groups" />
   </head>
   <body>
     <main class="app-shell" aria-live="polite">
@@ -47,6 +47,20 @@
               <div class="food-seen-label">我看到</div>
               <div class="food-list" id="foodList">还没看清食物</div>
             </div>
+            <div class="food-judgement" id="foodJudgement">
+              <div class="food-group can">
+                <div class="food-group-label">可以吃</div>
+                <div class="food-group-list" id="canEatList">没有</div>
+              </div>
+              <div class="food-group limit">
+                <div class="food-group-label">少量吃</div>
+                <div class="food-group-list" id="limitEatList">没有</div>
+              </div>
+              <div class="food-group avoid">
+                <div class="food-group-label">不能吃</div>
+                <div class="food-group-list" id="avoidEatList">没有</div>
+              </div>
+            </div>
             <div class="result-verdict" id="resultVerdict">米饭少半碗</div>
             <p class="result-advice" id="adviceText">先吃菜和肉蛋豆腐。</p>
           </article>
@@ -62,6 +76,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20260430-tts-fast"></script>
+    <script src="./app.js?v=20260430-food-groups"></script>
   </body>
 </html>

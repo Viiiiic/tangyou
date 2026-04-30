@@ -1,4 +1,4 @@
-const RULES_VERSION = "diabetes-meal-rules-001";
+const RULES_VERSION = "diabetes-meal-rules-002";
 
 function hasCategory(items, category) {
   return items.some((item) => item.category === category);
@@ -152,13 +152,15 @@ function makeResult({
   modelVersion,
   abstainReason,
 }) {
+  const foodGroups = state === "gray" ? emptyFoodGroups() : classifyFoods(recognized);
   return {
     scan_id: scanId,
     state,
     headline,
     advice,
     food_summary: summarizeFoods(recognized),
-    voice_text: withFoodSummary(voiceText, recognized),
+    food_groups: foodGroups,
+    voice_text: withFoodSummary(voiceText, recognized, foodGroups),
     primary_label: primaryLabel,
     primary_action: primaryAction,
     recognized,
@@ -176,28 +178,91 @@ function summarizeFoods(items) {
   return names.length > 0 ? `我看到：${names.join("、")}` : "还没看清食物";
 }
 
-function withFoodSummary(voiceText, items) {
+function withFoodSummary(voiceText, items, foodGroups) {
   const names = cleanFoodNames(items).slice(0, 3);
   if (names.length === 0) {
     return voiceText;
   }
-  return `看到${names.join("、")}。${voiceText}`;
+  const foodDecision = summarizeFoodDecisionForVoice(foodGroups || classifyFoods(items));
+  return `看到${names.join("、")}。${foodDecision ? `${foodDecision}。` : ""}${voiceText}`;
+}
+
+function emptyFoodGroups() {
+  return {
+    can_eat: [],
+    limit: [],
+    avoid: [],
+    unknown: [],
+  };
+}
+
+function classifyFoods(items) {
+  const groups = emptyFoodGroups();
+
+  for (const item of items || []) {
+    const name = cleanFoodName(item.name);
+    if (!name) continue;
+
+    if (["sweet_drink", "dessert"].includes(item.category)) {
+      pushUnique(groups.avoid, name);
+    } else if (
+      ["refined_starch", "starchy_veg", "congee_noodle", "fried_high_fat"].includes(
+        item.category,
+      )
+    ) {
+      pushUnique(groups.limit, name);
+    } else if (["non_starchy_veg", "protein"].includes(item.category)) {
+      pushUnique(groups.can_eat, name);
+    } else {
+      pushUnique(groups.unknown, name);
+    }
+  }
+
+  return groups;
+}
+
+function summarizeFoodDecisionForVoice(groups) {
+  const parts = [];
+  if (groups.can_eat.length > 0) {
+    parts.push(`${joinNames(groups.can_eat, 3)}可以吃`);
+  }
+  if (groups.limit.length > 0) {
+    parts.push(`${joinNames(groups.limit, 3)}少量吃`);
+  }
+  if (groups.avoid.length > 0) {
+    parts.push(`${joinNames(groups.avoid, 3)}不能吃`);
+  } else if (groups.can_eat.length > 0 || groups.limit.length > 0) {
+    parts.push("没有不能吃的");
+  }
+  return parts.join("。");
 }
 
 function cleanFoodNames(items) {
   return Array.from(
     new Set(
       (items || [])
-        .map((item) =>
-          String(item.name || "")
-            .replace(/\s*[（(].*$/g, "")
-            .replace(/\s+/g, "")
-            .replace(/[，,。.;；:：]+$/g, "")
-            .slice(0, 10),
-        )
+        .map((item) => cleanFoodName(item.name))
         .filter(Boolean),
     ),
   ).slice(0, 5);
+}
+
+function cleanFoodName(name) {
+  return String(name || "")
+    .replace(/\s*[（(].*$/g, "")
+    .replace(/\s+/g, "")
+    .replace(/[，,。.;；:：]+$/g, "")
+    .slice(0, 10);
+}
+
+function pushUnique(list, value) {
+  if (!list.includes(value)) {
+    list.push(value);
+  }
+}
+
+function joinNames(names, limit) {
+  return names.slice(0, limit).join("、");
 }
 
 function isProviderSetupIssue(reason) {
