@@ -117,7 +117,7 @@ async function analyzeWithBackend(file) {
   if (window.location.protocol === "file:") {
     throw new Error("Backend API requires http://localhost");
   }
-  if (!API_BASE && !isLocalHost()) {
+  if (!API_BASE && isStaticH5Host()) {
     throw new Error("backend_not_configured");
   }
 
@@ -525,7 +525,10 @@ function resolveApiBase() {
     window.localStorage.removeItem("tangyou_api_base");
     return "";
   }
-  return normalizeApiBase(window.TANGYOU_API_BASE || window.localStorage.getItem("tangyou_api_base") || "");
+  if (isStaticH5Host()) {
+    return normalizeApiBase(window.TANGYOU_API_BASE || window.localStorage.getItem("tangyou_api_base") || "");
+  }
+  return "";
 }
 
 function isLocalHost() {
@@ -534,6 +537,10 @@ function isLocalHost() {
 
 function normalizeApiBase(value) {
   return String(value || "").trim().replace(/\/+$/g, "");
+}
+
+function isStaticH5Host() {
+  return window.location.hostname.endsWith(".github.io");
 }
 
 function apiUrl(path) {
