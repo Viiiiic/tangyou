@@ -331,7 +331,7 @@ function normalizeBackendResult(result) {
     voice: result.voice_text,
     primaryLabel: result.primary_label,
     primaryAction: result.primary_action,
-    ttsAudioUrl: result.tts_audio_url,
+    ttsAudioUrl: result.tts_audio_url ? apiUrl(result.tts_audio_url) : null,
     scanId: result.scan_id,
     safety: result.safety,
     recognized,

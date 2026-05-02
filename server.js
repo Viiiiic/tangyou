@@ -22,7 +22,7 @@ const server = http.createServer(async (req, res) => {
   try {
     await route(req, res);
   } catch (error) {
-    sendError(res, error);
+    sendError(req, res, error);
   }
 });
 
@@ -30,12 +30,12 @@ async function route(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
   if (req.method === "OPTIONS") {
-    return sendOptions(res, req);
+    return sendOptions(req, res);
   }
 
   if (req.method === "GET" && url.pathname === "/api/health") {
     const user = await authService.userFromRequest(req);
-    return sendJson(res, 200, {
+    return sendJson(req, res, 200, {
       ok: true,
       service: "tangyou-backend",
       vision: getVisionStatus(),
@@ -46,12 +46,12 @@ async function route(req, res) {
 
   if (req.method === "GET" && url.pathname === "/api/auth/status") {
     const user = await authService.userFromRequest(req);
-    return sendJson(res, 200, authService.getStatus(user));
+    return sendJson(req, res, 200, authService.getStatus(user));
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/register") {
     const body = await readJsonBody(req);
-    return sendJson(res, 201, await authService.register({
+    return sendJson(req, res, 201, await authService.register({
       name: body.name,
       password: body.password,
       inviteCode: body.invite_code,
@@ -60,7 +60,7 @@ async function route(req, res) {
 
   if (req.method === "POST" && url.pathname === "/api/auth/login") {
     const body = await readJsonBody(req);
-    return sendJson(res, 200, await authService.login({
+    return sendJson(req, res, 200, await authService.login({
       name: body.name,
       password: body.password,
     }));
@@ -68,7 +68,7 @@ async function route(req, res) {
 
   if (req.method === "POST" && url.pathname === "/api/auth/logout") {
     await authService.logout(req);
-    return sendJson(res, 200, { ok: true });
+    return sendJson(req, res, 200, { ok: true });
   }
 
   if (req.method === "POST" && url.pathname === "/api/meal-scans") {
@@ -79,23 +79,23 @@ async function route(req, res) {
       filename: body.filename,
       scenario: body.scenario,
     });
-    return sendJson(res, 202, job);
+    return sendJson(req, res, 202, job);
   }
 
   const scanMatch = url.pathname.match(/^\/api\/meal-scans\/([^/]+)$/);
   if (req.method === "GET" && scanMatch) {
     await authService.requireUser(req);
-    return sendJson(res, 200, scanService.getScan(scanMatch[1]));
+    return sendJson(req, res, 200, scanService.getScan(scanMatch[1]));
   }
 
   if (req.method === "GET" && url.pathname.startsWith("/tts/")) {
     const filename = path.basename(url.pathname);
-    return sendFile(res, path.join(TTS_DIR, filename), "audio/mpeg");
+    return sendFile(req, res, path.join(TTS_DIR, filename), "audio/mpeg");
   }
 
   if (req.method === "GET" || req.method === "HEAD") {
     const filePath = resolveStaticPath(url.pathname);
-    return sendFile(res, filePath, contentType(filePath), req.method === "HEAD");
+    return sendFile(req, res, filePath, contentType(filePath), req.method === "HEAD");
   }
 
   throw new HttpError(405, "method not allowed");
@@ -129,12 +129,13 @@ async function readJsonBody(req) {
   }
 }
 
-async function sendFile(res, filePath, type, headOnly = false) {
+async function sendFile(req, res, filePath, type, headOnly = false) {
   try {
     const data = await fs.readFile(filePath);
     res.writeHead(200, {
       "Content-Type": type,
       "Cache-Control": type.startsWith("audio/") ? "public, max-age=31536000, immutable" : "no-store",
+      ...corsHeaders(req),
     });
     if (!headOnly) {
       res.end(data);
@@ -146,18 +147,18 @@ async function sendFile(res, filePath, type, headOnly = false) {
   }
 }
 
-function sendJson(res, statusCode, payload) {
+function sendJson(req, res, statusCode, payload) {
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
-    ...corsHeaders(),
+    ...corsHeaders(req),
   });
   res.end(JSON.stringify(payload));
 }
 
-function sendOptions(res) {
+function sendOptions(req, res) {
   res.writeHead(204, {
-    ...corsHeaders(),
+    ...corsHeaders(req),
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
@@ -165,17 +166,30 @@ function sendOptions(res) {
   res.end();
 }
 
-function corsHeaders() {
-  const origin = process.env.ALLOWED_ORIGINS || "*";
+function corsHeaders(req) {
+  const origins = String(process.env.ALLOWED_ORIGINS || "*")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  if (origins.length === 0 || origins.includes("*")) {
+    return {
+      "Access-Control-Allow-Origin": "*",
+      Vary: "Origin",
+    };
+  }
+
+  const requestOrigin = req?.headers?.origin;
+  const origin = requestOrigin && origins.includes(requestOrigin) ? requestOrigin : origins[0];
   return {
     "Access-Control-Allow-Origin": origin,
     Vary: "Origin",
   };
 }
 
-function sendError(res, error) {
+function sendError(req, res, error) {
   const statusCode = error.statusCode || 500;
-  sendJson(res, statusCode, {
+  sendJson(req, res, statusCode, {
     error: statusCode === 500 ? "internal server error" : error.message,
   });
   if (statusCode === 500) {

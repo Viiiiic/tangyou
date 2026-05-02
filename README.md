@@ -49,6 +49,16 @@ AUTH_INVITE_CODE="给家人或内部用户的邀请码"
 AUTH_TOKEN_TTL_DAYS=30
 ```
 
+如果使用腾讯云 CVM，项目里已经放好 Docker + Caddy 部署模板：
+
+```bash
+deploy/tencent-cloud/README.md
+```
+
+后端上线并通过健康检查后，外网 H5 用这个格式打开：
+
+`https://viiiiic.github.io/tangyou/?api=https://你的后端域名`
+
 如果只打开 GitHub Pages H5 而没有配置后端，页面会保守提示“识别没连上”，不会假装识别成功。
 
 ## 已覆盖流程
