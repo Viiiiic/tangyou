@@ -287,11 +287,11 @@ async function authErrorMessage(response) {
   try {
     const payload = await response.json();
     const message = String(payload.error || "");
+    if (response.status === 401) return "称呼或密码不对。";
     if (message.includes("invite code")) return "邀请码不对。";
     if (message.includes("already exists")) return "这个称呼已经注册。";
-    if (message.includes("password")) return "密码至少 6 位。";
+    if (message.includes("password must be at least")) return "密码至少 6 位。";
     if (message.includes("name")) return "称呼需要 2 到 24 个字。";
-    if (response.status === 401) return "称呼或密码不对。";
   } catch {
     // Fall through to the generic message.
   }
