@@ -370,10 +370,7 @@ function renderResult(result) {
   card.className = `result-card ${result.state}`;
   renderFoodGroups(result.foodGroups, result.state);
   document.getElementById("resultVerdict").textContent = result.verdict;
-  document.getElementById("listenBtn").textContent = result.primaryLabel;
-  document
-    .getElementById("resultBackBtn")
-    .classList.toggle("hidden", result.primaryAction === "camera");
+  document.getElementById("listenBtn").textContent = "听结果";
 }
 
 function renderFoodGroups(groups, state) {
@@ -560,10 +557,6 @@ document.getElementById("cameraInput").addEventListener("change", (event) => {
 });
 
 document.getElementById("listenBtn").addEventListener("click", () => {
-  if (currentResult.primaryAction === "camera") {
-    showScreen("camera");
-    return;
-  }
   speakCurrentResult();
 });
 

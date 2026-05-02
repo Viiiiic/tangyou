@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>糖友</title>
-    <link rel="stylesheet" href="./styles.css?v=20260430-auth" />
+    <link rel="stylesheet" href="./styles.css?v=20260502-actions" />
   </head>
   <body>
     <main class="app-shell" aria-live="polite">
@@ -75,16 +75,15 @@
           </article>
 
           <div class="result-actions">
-            <button class="primary-action compact" id="listenBtn" type="button">听怎么做</button>
+            <button class="secondary-action compact" id="resultBackBtn" data-go="camera" type="button">再拍一张</button>
+            <button class="primary-action compact" id="listenBtn" type="button">听结果</button>
           </div>
-
-          <button class="text-action" id="resultBackBtn" data-go="camera" type="button">再拍一张</button>
         </section>
 
         <div class="toast" id="toast" role="status"></div>
       </section>
     </main>
 
-    <script src="./app.js?v=20260502-lan"></script>
+    <script src="./app.js?v=20260502-actions"></script>
   </body>
 </html>
