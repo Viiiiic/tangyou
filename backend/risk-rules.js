@@ -76,8 +76,8 @@ function buildResult({ scanId, vision, modelVersion }) {
       scanId,
       state: "red",
       headline: sweetDrink ? "甜饮别喝" : "甜点别吃",
-      advice: sweetDrink ? "去掉甜饮，主食减量。" : "甜点先别吃，主食减量。",
-      voiceText: sweetDrink ? "甜饮别喝，主食少一点。" : "甜点别吃，主食少一点。",
+      advice: sweetDrink ? "甜饮别喝，主食三分之一碗。" : "甜点别吃，主食三分之一碗。",
+      voiceText: sweetDrink ? "甜饮别喝，主食吃三分之一碗。" : "甜点别吃，主食吃三分之一碗。",
       primaryLabel: "改好再拍",
       primaryAction: "camera",
       recognized: items,
@@ -95,9 +95,9 @@ function buildResult({ scanId, vision, modelVersion }) {
     return makeResult({
       scanId,
       state: "yellow",
-      headline: "主食少吃",
-      advice: "先吃菜肉，再吃主食。",
-      voiceText: "主食少吃，先吃菜肉。",
+      headline: "主食三分之一碗",
+      advice: "主食吃三分之一碗，先吃菜肉。",
+      voiceText: "主食吃三分之一碗，先吃菜肉。",
       primaryLabel: "听怎么做",
       primaryAction: "listen",
       recognized: items,
@@ -112,8 +112,8 @@ function buildResult({ scanId, vision, modelVersion }) {
       scanId,
       state: "green",
       headline: "菜肉先吃",
-      advice: "先吃菜肉，主食别加量。",
-      voiceText: "菜肉先吃，主食按平时量。",
+      advice: "菜肉先吃，主食最多一拳头。",
+      voiceText: "菜肉先吃，主食最多一拳头。",
       primaryLabel: "听结果",
       primaryAction: "listen",
       recognized: items,
@@ -127,9 +127,9 @@ function buildResult({ scanId, vision, modelVersion }) {
     return makeResult({
       scanId,
       state: "yellow",
-      headline: "少量吃",
-      advice: "糯米或主食升糖快，尝一点就好。",
-      voiceText: "少量吃，别当主食加量。",
+      headline: "尝两三口",
+      advice: "糯米或主食升糖快，只尝两三口。",
+      voiceText: "糯米或主食升糖快，只尝两三口，别当主食加量。",
       primaryLabel: "听怎么做",
       primaryAction: "listen",
       recognized: items,
@@ -226,7 +226,7 @@ function buildVoiceText(voiceText, items, foodGroups) {
   parts.push(avoid.length > 0 ? `${joinNames(avoid, 5)}不能吃` : "这顿饭没有不能吃的");
 
   if (limit.length > 0) {
-    const limitAdvice = `${joinNames(limit, 5)}少吃点`;
+    const limitAdvice = portionAdviceForLimit(limit, items);
     parts.push(voiceText.includes("先吃菜肉") ? `${limitAdvice}，先吃菜肉` : limitAdvice);
   }
 
@@ -295,6 +295,16 @@ function namesInGroupByCategory(items, categories, groupNames) {
       return categorySet.has(item.category) && groupSet.has(name);
     }),
   );
+}
+
+function portionAdviceForLimit(limit, items) {
+  const limitSet = new Set(limit);
+  const limitItems = (items || []).filter((item) => limitSet.has(cleanFoodName(item.name)));
+  const allSmall = limitItems.length > 0 && limitItems.every((item) => item.portion_band === "small");
+  if (allSmall) {
+    return `${joinNames(limit, 5)}尝两三口`;
+  }
+  return `${joinNames(limit, 5)}吃三分之一碗`;
 }
 
 function cleanFoodNames(items) {

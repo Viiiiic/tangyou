@@ -40,6 +40,8 @@ gh api -X POST repos/{owner}/{repo}/pages -f build_type=workflow
 VISION_PROVIDER=minimax
 MINIMAX_REGION=cn
 MINIMAX_API_KEY="你的 MiniMax Token Plan key"
+EXPERT_ADVISOR_MODE=minimax
+MINIMAX_EXPERT_MODEL=MiniMax-M2.7-highspeed
 TTS_MODE=minimax
 MINIMAX_VOICE_ID="Chinese (Mandarin)_Kind-hearted_Antie"
 MINIMAX_TTS_SPEED="1.15"
@@ -69,7 +71,7 @@ deploy/tencent-cloud/README.md
 - 结果页先显示识别到的食物，再显示糖尿病饮食风险判断
 - 普通上传在没有真实视觉模型时会保守返回 `识别未接入`，不会伪造黄绿红判断
 - 显式 demo 模式支持四种测试场景：yellow、gray、green、red
-- 配置 MiniMax CLI 和 `MINIMAX_API_KEY` 后，后端会调用 MiniMax 视觉能力解析饭菜，再由本地规则判断四态结果
+- 配置 MiniMax CLI 和 `MINIMAX_API_KEY` 后，后端会调用 MiniMax 视觉能力解析饭菜，再由本地规则和糖尿病饮食专家模型共同判断四态结果
 - 可选简单鉴权：设置 `AUTH_REQUIRED=1` 和 `AUTH_INVITE_CODE` 后，用户需要邀请码注册并登录，才能调用识图接口
 - 后端确定性规则输出四态结果：按平时量、米饭少半碗、先别吃、照片没拍清
 - 配置 `MINIMAX_API_KEY` 后默认使用 MiniMax TTS；没有 key 时才退回浏览器朗读
@@ -115,6 +117,58 @@ export MINIMAX_CLI_BIN="/path/to/mmx"
 ```
 
 没有 MiniMax key 或没有安装 `mmx` 时，普通上传会显示“识别未接入”，不会伪造识别结果。
+
+## 糖尿病饮食专家模型配置
+
+后端先让视觉模型只输出结构化食材和份量，再由本地确定性规则做保守判断，最后调用 MiniMax 文本模型做糖尿病饮食专家复核。专家模型可以把判断变得更严格，但不能把本地红色/黄色判断降级成绿色。
+
+默认模型为 `MiniMax-M2.7-highspeed`：
+
+```bash
+export EXPERT_ADVISOR_MODE=minimax
+export MINIMAX_EXPERT_MODEL="MiniMax-M2.7-highspeed"
+export MINIMAX_API_KEY="你的 MiniMax Token Plan key"
+npm start
+```
+
+如果专家模型超时或接口失败，后端会自动退回本地规则。话术会尽量使用老人能执行的份量，例如“主食吃三分之一碗”“主食最多一拳头”“糯米点心尝两三口”，不再使用“少量吃”这种模糊表述。
+
+## 音色复刻准备（MiniMax Voice Clone）
+
+MiniMax 音色快速复刻流程：
+
+1. 上传待复刻音频到 `POST https://api.minimaxi.com/v1/files/upload`，`purpose=voice_clone`，音频格式 `mp3/m4a/wav`，时长 10 秒到 5 分钟，大小不超过 20MB。
+2. 可选上传示例音频到同一个上传接口，`purpose=prompt_audio`，示例音频小于 8 秒，用来增强相似度和稳定性。
+3. 调用 `POST https://api.minimaxi.com/v1/voice_clone`，传入 `file_id`、自定义 `voice_id`、可选 `clone_prompt`、试听文本 `text` 和模型 `speech-2.8-hd`。
+4. 复刻成功后，把得到的 `voice_id` 配到 `MINIMAX_VOICE_ID`，后续 TTS 就会使用你的声音。
+
+项目内有一个本地脚本可执行以上流程。它会把声音样本上传到 MiniMax，必须先确认声音本人同意：
+
+```bash
+MINIMAX_API_KEY="你的 key" npm run voice:clone -- \
+  --consent \
+  --audio /path/to/your-voice.wav \
+  --voice-id TangyouDadVoice001
+```
+
+如果要加一个 8 秒以内的示例音频来稳定语气：
+
+```bash
+MINIMAX_API_KEY="你的 key" npm run voice:clone -- \
+  --consent \
+  --audio /path/to/your-voice.wav \
+  --prompt-audio /path/to/prompt.wav \
+  --prompt-text "爸妈，先吃菜肉，主食就吃三分之一碗。" \
+  --voice-id TangyouDadVoice001
+```
+
+脚本成功后会输出 `MINIMAX_VOICE_ID=...`，把这个值放进后端环境变量后重启即可。
+
+注意：
+
+- 复刻声音属于敏感生物特征数据，只有在本人同意且明确用途时才上传。
+- 复刻得到的音色如果 7 天内没有正式调用语音合成接口，MiniMax 会删除该音色。
+- `voice_id` 必须 8-256 位，首字符是英文字母，只能包含数字、字母、`-`、`_`，末尾不能是 `-` 或 `_`。
 
 ## 简单登录配置
 

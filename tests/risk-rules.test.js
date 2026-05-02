@@ -46,6 +46,7 @@ test("routes sweet drink to red", () => {
   assert.deepEqual(result.food_groups.limit, ["米饭"]);
   assert.deepEqual(result.food_groups.avoid, ["甜饮"]);
   assert.match(result.voice_text, /甜饮不能吃/);
+  assert.match(result.voice_text, /三分之一碗/);
 });
 
 test("routes large rice to yellow", () => {
@@ -64,14 +65,14 @@ test("routes large rice to yellow", () => {
   });
 
   assert.equal(result.state, "yellow");
-  assert.equal(result.headline, "主食少吃");
+  assert.equal(result.headline, "主食三分之一碗");
   assert.equal(result.food_summary, "我看到：米饭、青菜、鸡肉");
   assert.deepEqual(result.food_groups.can_eat, ["青菜", "鸡肉"]);
   assert.deepEqual(result.food_groups.limit, ["米饭"]);
   assert.deepEqual(result.food_groups.avoid, []);
   assert.equal(
     result.voice_text,
-    "这顿饭没有不能吃的。米饭少吃点，先吃菜肉。青菜可以多吃点。鸡肉可以吃。",
+    "这顿饭没有不能吃的。米饭吃三分之一碗，先吃菜肉。青菜可以多吃点。鸡肉可以吃。",
   );
 });
 
@@ -98,7 +99,7 @@ test("routes balanced plate to green", () => {
   assert.deepEqual(result.food_groups.avoid, []);
   assert.equal(
     result.voice_text,
-    "这顿饭没有不能吃的。杂粮饭少吃点。青菜可以多吃点。豆腐可以吃。",
+    "这顿饭没有不能吃的。杂粮饭吃三分之一碗。青菜可以多吃点。豆腐可以吃。",
   );
 });
 
@@ -116,7 +117,8 @@ test("routes a single small starch snack to yellow instead of unclear", () => {
   });
 
   assert.equal(result.state, "yellow");
-  assert.equal(result.headline, "少量吃");
+  assert.equal(result.headline, "尝两三口");
   assert.deepEqual(result.food_groups.limit, ["青团"]);
   assert.equal(result.safety.abstain_reason, null);
+  assert.match(result.voice_text, /两三口/);
 });

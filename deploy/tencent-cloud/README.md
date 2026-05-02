@@ -41,6 +41,8 @@ nano .env
 DOMAIN=api.example.com
 ALLOWED_ORIGINS=https://viiiiic.github.io,http://localhost:4173
 MINIMAX_API_KEY=你的 MiniMax key
+EXPERT_ADVISOR_MODE=minimax
+MINIMAX_EXPERT_MODEL=MiniMax-M2.7-highspeed
 AUTH_INVITE_CODE=只发给家人的邀请码
 ```
 
@@ -56,7 +58,7 @@ sudo docker compose up -d --build
 curl https://你的后端域名/api/health
 ```
 
-看到 `ok:true`、`vision.configured:true`、`tts.configured:true`、`auth.required:true` 才算生产后端接好了。
+看到 `ok:true`、`vision.configured:true`、`expert.configured:true`、`tts.configured:true`、`auth.required:true` 才算生产后端接好了。
 
 ## H5 打开方式
 

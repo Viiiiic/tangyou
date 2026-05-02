@@ -4,6 +4,7 @@ const path = require("path");
 const { AuthService } = require("./backend/auth-service");
 const { HttpError, ScanService } = require("./backend/scan-service");
 const { TtsProvider } = require("./backend/tts-provider");
+const { VoiceCloneService } = require("./backend/voice-clone-service");
 const { getVisionStatus } = require("./backend/vision-adapter");
 
 const PORT = Number(process.env.PORT || 4173);
@@ -13,6 +14,7 @@ const TTS_DIR = path.join(STORAGE_DIR, "tts");
 
 const authService = new AuthService({ storageDir: STORAGE_DIR });
 const ttsProvider = new TtsProvider({ storageDir: TTS_DIR });
+const voiceCloneService = new VoiceCloneService();
 const scanService = new ScanService({
   storageDir: STORAGE_DIR,
   ttsProvider,
@@ -39,7 +41,9 @@ async function route(req, res) {
       ok: true,
       service: "tangyou-backend",
       vision: getVisionStatus(),
+      expert: scanService.getExpertStatus(),
       tts: ttsProvider.getStatus(),
+      voice_clone: voiceCloneService.getStatus(),
       auth: authService.getStatus(user),
     });
   }

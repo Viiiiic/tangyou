@@ -1,5 +1,6 @@
 const fs = require("fs/promises");
 const path = require("path");
+const { DiabetesExpertAdvisor } = require("./diabetes-expert-advisor");
 const { analyzeMealImage } = require("./vision-adapter");
 const { buildResult } = require("./risk-rules");
 
@@ -9,8 +10,13 @@ class ScanService {
   constructor({ storageDir, ttsProvider }) {
     this.storageDir = storageDir;
     this.ttsProvider = ttsProvider;
+    this.expertAdvisor = new DiabetesExpertAdvisor();
     this.jobs = new Map();
     this.sequence = 0;
+  }
+
+  getExpertStatus() {
+    return this.expertAdvisor.getStatus();
   }
 
   async createScan({ image, filename, scenario }) {
@@ -61,10 +67,14 @@ class ScanService {
       filename,
       scenario,
     });
-    const result = buildResult({
+    const ruleResult = buildResult({
       scanId,
       vision,
       modelVersion: vision.model_version,
+    });
+    const result = await this.expertAdvisor.refine({
+      vision,
+      ruleResult,
     });
     const tts = await this.generateTtsForResult(result.voice_text);
     const completed = {
